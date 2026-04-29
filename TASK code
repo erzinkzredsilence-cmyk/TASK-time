@@ -1,8 +1,20 @@
-// 1. นำ Access Token มาใส่ (ใส่แล้วโอเคครับ)
+// 1. นำ Access Token มาใส่
 const LINE_ACCESS_TOKEN = '4CfhO692jNQIXSmugKm0Ysy6TbkQxxImCi/BN+85e7Cl7inV9Dz3l8Nv5N1vLlfB+8B0pQy5YLsAIwusCgD05EFUMFogq+Pa5dmseMAHRMCQ50XOSXfAmjFWA5Jvv/wTOIcqagHFmF014JOrThop4QdB04t89/1O/w1cDnyilFU=';
 
 function sendDutyFromCalendar() {
-  // 2. เปลี่ยน 'ชื่อปฏิทินเวรของคุณ' เป็นชื่อปฏิทินจริงๆ หรือใช้เมล์ของคุณเอง
+  // --- ระบบป้องกันบอทส่งซ้ำ (เช็ควันที่) ---
+  const today = new Date().toDateString();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const lastRun = scriptProperties.getProperty('LAST_RUN_DATE');
+
+  // ถ้าวันนี้ส่งไปแล้ว ให้หยุดการทำงานทันที
+  if (lastRun === today) {
+    console.log("วันนี้ส่งแจ้งเตือนไปแล้ว ข้ามการทำงาน...");
+    return; 
+  }
+  // ----------------------------------------
+
+  // 2. ดึงข้อมูลจากปฏิทิน
   const calendarName = 'mntheiyrreuxnngein@gmail.com'; 
   const calendar = CalendarApp.getCalendarsByName(calendarName)[0] || CalendarApp.getDefaultCalendar();
   
@@ -24,6 +36,10 @@ function sendDutyFromCalendar() {
                   "ขอบคุณที่ช่วยดูแลความเรียบร้อยครับ!";
 
   broadcastToLine(message);
+
+  // --- เมื่อส่งเสร็จ ให้จดจำไว้ว่าวันนี้ส่งแล้ว ---
+  scriptProperties.setProperty('LAST_RUN_DATE', today);
+  console.log("บันทึกประวัติการส่งเรียบร้อย");
 }
 
 function broadcastToLine(message) {

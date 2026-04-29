@@ -1,0 +1,42 @@
+// 1. นำ Access Token มาใส่ (ใส่แล้วโอเคครับ)
+const LINE_ACCESS_TOKEN = '4CfhO692jNQIXSmugKm0Ysy6TbkQxxImCi/BN+85e7Cl7inV9Dz3l8Nv5N1vLlfB+8B0pQy5YLsAIwusCgD05EFUMFogq+Pa5dmseMAHRMCQ50XOSXfAmjFWA5Jvv/wTOIcqagHFmF014JOrThop4QdB04t89/1O/w1cDnyilFU=';
+
+function sendDutyFromCalendar() {
+  // 2. เปลี่ยน 'ชื่อปฏิทินเวรของคุณ' เป็นชื่อปฏิทินจริงๆ หรือใช้เมล์ของคุณเอง
+  const calendarName = 'mntheiyrreuxnngein@gmail.com'; 
+  const calendar = CalendarApp.getCalendarsByName(calendarName)[0] || CalendarApp.getDefaultCalendar();
+  
+  const now = new Date();
+  const events = calendar.getEventsForDay(now);
+  
+  let dutyPerson = "";
+  if (events.length > 0) {
+    dutyPerson = events.map(e => e.getTitle()).join(", ");
+  } else {
+    dutyPerson = "วันนี้ไม่มีระบุรายชื่อเวรในปฏิทิน";
+  }
+
+  const message = "🔔 แจ้งเตือนเวรวันนี้!\n" +
+                  "👤 รายชื่อ: " + dutyPerson + "\n\n" +
+                  "ภารกิจก่อนกลับ:\n" +
+                  "✅ ตรวจสอบแอร์ทุกตัว (OFF)\n" +
+                  "✅ ตรวจสอบประตูด้านหลัง/หน้า (LOCKED)\n\n" +
+                  "ขอบคุณที่ช่วยดูแลความเรียบร้อยครับ!";
+
+  broadcastToLine(message);
+}
+
+function broadcastToLine(message) {
+  const url = 'https://api.line.me/v2/bot/message/broadcast';
+  const options = {
+    'method': 'post',
+    'headers': {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + LINE_ACCESS_TOKEN,
+    },
+    'payload': JSON.stringify({
+      'messages': [{ 'type': 'text', 'text': message }]
+    })
+  };
+  UrlFetchApp.fetch(url, options);
+}

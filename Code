@@ -15,33 +15,35 @@ function sendDutyFromCalendar() {
   // ----------------------------------------
 
   // 2. ดึงข้อมูลจากปฏิทิน
-  const calendarName = 'mntheiyrreuxnngein@gmail.com'; 
+  const calendarName = 'fatelerrorcome@gmail.com'; 
   const calendar = CalendarApp.getCalendarsByName(calendarName)[0] || CalendarApp.getDefaultCalendar();
   
   const now = new Date();
   const events = calendar.getEventsForDay(now);
   
-  let dutyPerson = "";
-  if (events.length > 0) {
-    dutyPerson = events.map(e => e.getTitle()).join(", ");
-  } else {
-    dutyPerson = "วันนี้ไม่มีระบุรายชื่อเวรในปฏิทิน";
+  // *** เงื่อนไขใหม่: ถ้าไม่มีคนเข้าเวร ให้หยุดทำงานเลย ไม่ส่ง LINE ***
+  if (events.length === 0) {
+    console.log("วันนี้ไม่มีเวรในปฏิทิน จะไม่มีการส่งแจ้งเตือนเข้า LINE");
+    return; // จบการทำงานทันที (ไม่ส่งข้อความ และไม่บันทึกว่าส่งแล้ว)
   }
+
+  // ถ้ามีเวร ดึงชื่อมาต่อกัน
+  const dutyPerson = events.map(e => e.getTitle()).join(", ");
 
   const message = "🔔 แจ้งเตือนเวรวันนี้!\n" +
                   "👤 รายชื่อ: " + dutyPerson + "\n\n" +
                   "ภารกิจก่อนกลับตอน 17:30 น.:\n" +
-                  "ตรวจสอบแอร์ทุกตัว (OFF)\n" +
-                  "ตรวจสอบประตูด้านหลัง/หน้า (LOCKED)\n" +
-                  "ปิดสำนักงาน\n" +
-                  "ปิดห้องน้ำ\n\n" +
+                  "✅ ตรวจสอบแอร์ทุกตัว (OFF)\n" +
+                  "✅ ตรวจสอบประตูด้านหลัง/หน้า (LOCKED)\n" +
+                  "✅ ปิดสำนักงาน\n" +
+                  "✅ ปิดประตูห้องน้ำ\n\n" +
                   "ขอบคุณที่ช่วยดูแลความเรียบร้อยครับ!";
 
   broadcastToLine(message);
 
   // --- เมื่อส่งเสร็จ ให้จดจำไว้ว่าวันนี้ส่งแล้ว ---
   scriptProperties.setProperty('LAST_RUN_DATE', today);
-  console.log("บันทึกประวัติการส่งเรียบร้อย");
+  console.log("ส่ง LINE และบันทึกประวัติเรียบร้อย");
 }
 
 function broadcastToLine(message) {
@@ -57,4 +59,16 @@ function broadcastToLine(message) {
     })
   };
   UrlFetchApp.fetch(url, options);
+}
+
+// ==========================================
+// ฟังก์ชันสำหรับ "กดทดสอบ" ด้วยตัวเอง (รันอันนี้เวลาอยากเทสต์)
+// ==========================================
+function testBot() {
+  // ลบความจำว่า "วันนี้ส่งไปแล้ว" ทิ้งชั่วคราว
+  PropertiesService.getScriptProperties().deleteProperty('LAST_RUN_DATE');
+  console.log("รีเซ็ตระบบกันซ้ำแล้ว กำลังเริ่มทดสอบการส่ง...");
+  
+  // เรียกใช้งานฟังก์ชันหลัก
+  sendDutyFromCalendar();
 }
